@@ -1,0 +1,36 @@
+{
+   "username" : "mrrhb_hub",
+    "password" : "YvgaG1PKNJ0E",
+    "database" :"mrrhb_hub",
+    
+    "partner_username" : "mrrhb_hub",
+    "partner_password" : "YvgaG1PKNJ0E",
+    "partner_database" :"mrrhb_hub",
+    
+    "hub_username" : "mrrhb_hub",
+    "hub_password" : "YvgaG1PKNJ0E",
+    "hub_database" :"mrrhb_hub",
+    
+    "shop_username" : "mrrhb_hub",
+    "shop_password" : "YvgaG1PKNJ0E",
+    "shop_database" :"mrrhb_hub",
+    
+    "host" : "localhost",
+    "dialect" : "mysql",
+    "env" : "PROD",
+    "baseurl": "https://api.mayway.in/",
+    "SECRET_KEY": "a2cde7fbb7a767c2e23068ac125eb528",
+    
+        
+    "SUPPORT_TEAM":"Mayway Support Team",
+    "APP_NAME":"Mayway Business",
+    "TELEGEAM_LINK":"https://t.me/maywaybuisness",
+    "YOUTUBE_LINK":"https://youtube.com/@maywaybuisness?si=6rUdA81ttRdCCNRR",
+    "FACEBOOK_LINK":"https://www.facebook.com/maywaytech",
+    "WEBSITE":"",
+    "WEBSITE_HUB":"",
+    "APP_IMG":"",
+    "APP_LINK":""
+
+
+}
