@@ -19,7 +19,7 @@ const endpoints = {
 };
 
 
-passbook.post('/f1d27ae35a092cf166f67073a450fd6d759430e8', authenticateJWT, logMiddleware, (req, res) => {
+passbook.post('/f1d27ae35a092cf166f67073a450fd6d759430e8', logMiddleware, (req, res) => {
 	passbookController.passbook(req.body,res)
 	    .then(data => res.json(data))  
 	    .catch(error => {

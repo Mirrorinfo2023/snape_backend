@@ -475,8 +475,7 @@ class AddMoney {
                   user_id:user_id,
                   wallet: walletType
               }
-      
-         
+               
               const result = await this.db.add_money_view.getAllData(whereCondition);
                 
               const moneyResult = [];

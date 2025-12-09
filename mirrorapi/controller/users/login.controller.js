@@ -176,8 +176,8 @@ class Login {
 
     try {
 
-      //  const decryptedObject = req.body;
-      const decryptedObject = utility.DataDecrypt(req.body.encReq);
+       const decryptedObject = req.body;
+      // const decryptedObject = utility.DataDecrypt(req.body.encReq);
       console.log("Request Body:", decryptedObject);
 
       const { mobile, email, referred_by } = decryptedObject;
@@ -601,7 +601,6 @@ class Login {
 
   }
 
-
   async referralDetails(req, res) {
 
     const { referral_id } = req;
@@ -741,7 +740,6 @@ class Login {
       return res.status(500).json({ status: 500, message: error, data: [] });
     }
   }
-
 
   async getProfile(req, res) {
     const decryptedObject = utility.DataDecrypt(req.encReq);

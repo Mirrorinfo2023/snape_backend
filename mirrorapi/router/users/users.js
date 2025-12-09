@@ -163,7 +163,7 @@ users.post('/9a82bc2234a56504434ce88e3ab2a11f34b0dcc8', logMiddleware, (req, res
 });
 
 //Get User Details
-users.post('/8f3457ae01ceba087cf9790ab03e62a6035bd460', authenticateJWT, logMiddleware, (req, res) => {
+users.post('/8f3457ae01ceba087cf9790ab03e62a6035bd460', logMiddleware, (req, res) => {
     registerController.getUserDetails(req.body, res)
 
         .catch(error => {
