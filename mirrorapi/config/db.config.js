@@ -95,7 +95,7 @@ sequelize
   db.passbook = require("../model/passbook/passbook.model")(sequelize, DataTypes, Model);
   db.viewpassbook = require("../model/passbook/view_passbook.model")(sequelize, DataTypes, Model);
   db.mpin = require("../model/mpin/mpin.model")(sequelize, DataTypes, Model);
-  
+  db.leadsUserAction = require("../model/leads/lead_user_action.model.js")(sequelize, DataTypes, Model);
   db.kyc = require("../model/kyc/kyc.model")(sequelize, DataTypes, Model);
   
   /**********************START*******************Business Page******************************START*************************/
@@ -103,6 +103,7 @@ sequelize
   db.banner = require("../model/banner/banner.model")(sequelize, DataTypes, Model);
   db.bannerCategory = require("../model/banner/bannerCategory.model")(sequelize, DataTypes, Model);
   db.view_banner = require("../model/banner/view_banner.model")(sequelize, DataTypes, Model);
+  db.partner = require("../model/partners/partner.model.js")(sequelize, DataTypes, Model);
   /**************************************END*****Business Page**************************END**********************/
   
   /**********************START*******************REFERRAL******************************START*************************/

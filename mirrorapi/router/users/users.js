@@ -8,7 +8,7 @@ const QrGenerateController = require('../../controller/users/qrGenerate.controll
 const dashboardController = require('../../controller/users/dashboard.controller');
 const idCardController = require('../../controller/users/idCard.controller');
 const path = require("path");
-//const uploadFileToB2 = require('../../utility/b2Upload.utility'); // new B2 uploader
+const uploadFileToB2 = require('../../utility/b2Upload.utility'); // new B2 uploader
 // const cronController = require('../../cron/orders/order.cron');
 
 const authenticateJWT = require('../../middleware/authMiddleware');
@@ -29,17 +29,21 @@ const storage = multer.memoryStorage();
 
 const fileUpload = configureMulter((req) => {
     const userId = req.body.user_id || req.user?.id;
-    console.log("userId is", req.body)
     if (!userId) throw new Error("User ID is required");
 
-    // Path at project root: /uploads/kyc/{userId}
     return path.join(process.cwd(), "uploads/kyc", userId.toString());
 }).fields([
     { name: "panImage", maxCount: 1 },
     { name: "aadharImage", maxCount: 1 },
     { name: "aadharBackImage", maxCount: 1 },
     { name: "chequeBookImage", maxCount: 1 },
+    { name: "shopActFile", maxCount: 1 },
+    { name: "udyogAadharFile", maxCount: 1 },
+    { name: "gstFile", maxCount: 1 },
+    { name: "moaFile", maxCount: 1 },
+    { name: "incorporationFile", maxCount: 1 },
 ]);
+
 
 const destinationPath1 = 'uploads/user';
 const fileUpload1 = configureMulter(destinationPath1).single('img');
@@ -81,35 +85,65 @@ const endpoints = {
 };
 
 
-users.post(
-    '/550ecdddb5b8b023dda91594810884c12456d0a3',
-    fileUpload,
-    async (req, res) => {
-        try {
-            // Directly pass files + body to controller
-            const response = await kycController.uploadKyc(req.files, req.body);
-            res.status(response.status).json(response);
-        } catch (err) {
-            console.error("KYC Upload Error:", err);
-            res.status(500).json({ status: 500, message: "KYC Upload Failed" });
-        }
+users.post('/550ecdddb5b8b023dda91594810884c12456d0a3', fileUpload, async (req, res) => {
+    try {
+        const response = await kycController.uploadKyc(req.files, req.body);
+        res.status(response.status).json(response);
+    } catch (err) {
+        console.error("KYC Upload Error:", err);
+        res.status(500).json({ status: 500, message: "KYC Upload Failed" });
     }
+}
 );
 
 
-//Login
-users.post('/2736fab291f04e69b62d490c3c09361f5b82461a', logMiddleware, async (req, res) => {
-    loginController.login(req, res)
+
+
+//save user custome cashback 
+users.post('/saveUserCashback', logMiddleware, (req, res) => {
+    loginController.saveUserCashback(req, res)
+        .catch(err => res.status(500).json({ status: 500, message: 'Internal Server Error' }));
+});
+
+// Add IP
+users.post('/add-whitelistip-req', logMiddleware, (req, res) => {
+    loginController.submitIp(req, res)
+        .catch(err => res.status(500).json({ status: 500, message: 'Internal Server Error' }));
+});
+
+// List all IPs
+users.post('/11130cdae5a3d15697bc8f40f03d2efb6e52865c', logMiddleware, (req, res) => {
+    loginController.getAllIpRequests(req, res)
+        .catch(err => res.status(500).json({ status: 500, message: 'Internal Server Error' }));
+});
+
+// List user IPs
+users.post('/get-user-ips-list', logMiddleware, (req, res) => {
+    loginController.getUserIpRequests(req, res)
+        .catch(err => res.status(500).json({ status: 500, message: 'Internal Server Error' }));
+});
+
+// update status 
+users.post('/update-status-ips', logMiddleware, (req, res) => {
+    loginController.updateIpStatus(req, res)
+        .catch(err => res.status(500).json({ status: 500, message: 'Internal Server Error' }));
+});
+
+//Get Profile
+users.post('/check-user-by-mobile', logMiddleware, async (req, res) => {
+
+    loginController.checkUserByMobile(req.body, res)
 
         .catch(error => {
-            console.error('Error requesting Login:', error);
+            console.error('Error requesting Get Profile:', error);
             res.status(500).json({ error: 'Internal Server Error' });
         });
 });
 
+
 //Login
-users.post('/2736fab291f04e69b62d490c3c09361f5b824890', logMiddleware, async (req, res) => {
-    loginController.loginmirror(req, res)
+users.post('/2736fab291f04e69b62d490c3c09361f5b82461a', logMiddleware, async (req, res) => {
+    loginController.login(req.body, res)
 
         .catch(error => {
             console.error('Error requesting Login:', error);
@@ -120,7 +154,7 @@ users.post('/2736fab291f04e69b62d490c3c09361f5b824890', logMiddleware, async (re
 //Admin Login
 users.post('/4e22b047986b40e5018b04a71c7df2e04893f2d3', logMiddleware, (req, res) => {
 
-    loginController.admin_login(req.body, res)
+    loginController.admin_login(req, res)
 
         .catch(error => {
             console.error('Error requesting Admin Login:', error);
@@ -163,7 +197,7 @@ users.post('/9a82bc2234a56504434ce88e3ab2a11f34b0dcc8', logMiddleware, (req, res
 });
 
 //Get User Details
-users.post('/8f3457ae01ceba087cf9790ab03e62a6035bd460', logMiddleware, (req, res) => {
+users.post('/8f3457ae01ceba087cf9790ab03e62a6035bd460', authenticateJWT, logMiddleware, (req, res) => {
     registerController.getUserDetails(req.body, res)
 
         .catch(error => {
@@ -194,90 +228,6 @@ users.post('/f0a52c7bd4f59cc75f2be2ead939ffa1adda3441', logMiddleware, (req, res
         });
 });
 
-//Upload Kyc
-// users.post(
-//     "/550ecdddb5b8b023dda91594810884c12456d0a3",
-//     fileUpload,           // multer
-//     logMiddleware,        // logging
-//     async (req, res) => {
-//         try {
-//             // Safely extract files
-//             const panImage = req.files?.["panImage"]?.[0]?.filename || null;
-//             const aadharImage = req.files?.["aadharImage"]?.[0]?.filename || null;
-//             const aadharBackImage = req.files?.["aadharBackImage"]?.[0]?.filename || null;
-//             const chequeBookImage = req.files?.["chequeBookImage"]?.[0]?.filename || null;
-
-//             // Log for debugging
-//             console.log("Body from frontend:", req.body);
-//             console.log("Files received:", {
-//                 panImage,
-//                 aadharImage,
-//                 aadharBackImage,
-//                 chequeBookImage,
-//             });
-
-//             // Call controller
-//             const data = await kycController.uploadKyc(
-//                 panImage,
-//                 aadharImage,
-//                 aadharBackImage,
-//                 chequeBookImage,
-//                 req
-//             );
-
-//             res.status(200).json({
-//                 status: 200,
-//                 message: "KYC uploaded successfully",
-//                 data,
-//             });
-//         } catch (error) {
-//             console.error("Error uploading KYC:", error);
-//             res.status(500).json({ error: "Internal Server Error" });
-//         }
-//     }
-// );
-
-
-
-
-// users.post(
-//     "/550ecdddb5b8b023dda91594810884c12456d0a3",
-//     fileUpload,
-//     async (req, res) => {
-//         try {
-//             const userId = req.body.user_id;
-
-//             // 🔹 Upload each file to B2 (if present)
-//             const panImage =
-//                 req.files?.panImage?.[0] &&
-//                 (await uploadKycImage(userId, req.files.panImage[0]));
-//             const aadharImage =
-//                 req.files?.aadharImage?.[0] &&
-//                 (await uploadKycImage(userId, req.files.aadharImage[0]));
-//             const aadharBackImage =
-//                 req.files?.aadharBackImage?.[0] &&
-//                 (await uploadKycImage(userId, req.files.aadharBackImage[0]));
-//             const chequeBookImage =
-//                 req.files?.chequeBookImage?.[0] &&
-//                 (await uploadKycImage(userId, req.files.chequeBookImage[0]));
-
-//             // 🔹 Pass download URLs to DB
-//             const data = await kycController.uploadKyc(
-//                 panImage?.downloadUrl || null,
-//                 aadharImage?.downloadUrl || null,
-//                 aadharBackImage?.downloadUrl || null,
-//                 chequeBookImage?.downloadUrl || null,
-//                 req.body
-//             );
-
-//             res.json({ status: 200, message: "KYC uploaded successfully", data });
-//         } catch (error) {
-//             console.error("Error uploading KYC:", error);
-//             res.status(500).json({ error: "Internal Server Error" });
-//         }
-//     }
-// );
-
 // Get Kyc
 users.post('/b8e015dd1c79a227c4cb1ceefaf8e3ab2a79665f', authenticateJWT, logMiddleware, async (req, res) => {
 
@@ -292,15 +242,15 @@ users.post('/b8e015dd1c79a227c4cb1ceefaf8e3ab2a79665f', authenticateJWT, logMidd
 
 
 //Get KYC Report
-users.post('/421abbe46f1f142bd142def0e11ad9f7433adad6', authenticateJWT, logMiddleware, async (req, res) => {
+// users.post('/421abbe46f1f142bd142def0e11ad9f7433adad6', authenticateJWT, logMiddleware, async (req, res) => {
 
-    kycController.getKycReport(req.body, res)
+//     kycController.getKycReport(req.body, res)
 
-        .catch(error => {
-            console.error('Error requesting Get Kyc Report:', error);
-            res.status(500).json({ error: 'Internal Server Error' });
-        });
-});
+//         .catch(error => {
+//             console.error('Error requesting Get Kyc Report:', error);
+//             res.status(500).json({ error: 'Internal Server Error' });
+//         });
+// });
 
 // Update Kyc status
 users.post('/c554430d8f155abbaa1ee9c2dbaf8adb95c8132f', authenticateJWT, logMiddleware, async (req, res) => {
@@ -314,28 +264,28 @@ users.post('/c554430d8f155abbaa1ee9c2dbaf8adb95c8132f', authenticateJWT, logMidd
 });
 
 //Update user status
-users.post('/7e0f025e644befa1fce101beb075a6acc6360b16', authenticateJWT, logMiddleware, async (req, res) => {
+// users.post('/7e0f025e644befa1fce101beb075a6acc6360b16', authenticateJWT, logMiddleware, async (req, res) => {
 
-    loginController.updateUserStatus(req.body, res)
-        .catch(error => {
-            console.error('Error requesting Update User Status:', error);
-            res.status(500).json({ error: 'Internal Server Error' });
-        });
-});
+//     loginController.updateUserStatus(req.body, res)
+//         .catch(error => {
+//             console.error('Error requesting Update User Status:', error);
+//             res.status(500).json({ error: 'Internal Server Error' });
+//         });
+// });
 
 //Get Profile
-users.post('/63c6ad33e3395d611c35ed9ef749fd8fe4ae2bb4', authenticateJWT, logMiddleware, async (req, res) => {
+// users.post('/63c6ad33e3395d611c35ed9ef749fd8fe4ae2bb4', logMiddleware, async (req, res) => {
 
-    loginController.getProfile(req.body, res)
+//     loginController.getProfile(req.body, res)
 
-        .catch(error => {
-            console.error('Error requesting Get Profile:', error);
-            res.status(500).json({ error: 'Internal Server Error' });
-        });
-});
+//         .catch(error => {
+//             console.error('Error requesting Get Profile:', error);
+//             res.status(500).json({ error: 'Internal Server Error' });
+//         });
+// });
 
 //update user profile
-users.post('/978d91c8d62d882a00631e74fa6c6863616ebc13', fileUpload1, authenticateJWT, logMiddleware, async (req, res) => {
+users.post('/978d91c8d62d882a00631e74fa6c6863616ebc13', fileUpload1, logMiddleware, async (req, res) => {
 
     let file;
     if (req.file) {
@@ -409,25 +359,20 @@ users.post('/f3fe0b8f30dd498bce7cabe83acc00722db55006', authenticateJWT, logMidd
 });
 
 // Credit debit income to user
-users.post('/d7dfaf86f2ab8c7013f268736ab747e07bd8558e', authenticateJWT, logMiddleware, async (req, res) => {
+// users.post('/d7dfaf86f2ab8c7013f268736ab747e07bd8558e', authenticateJWT, logMiddleware, async (req, res) => {
 
-    oldIncomeController.creditDebitIncomeToUser(req.body, res)
+//     oldIncomeController.creditDebitIncomeToUser(req.body, res)
 
-        .catch(error => {
-            console.error('Error requesting Credit Debit Income To User:', error);
-            res.status(500).json({ error: 'Internal Server Error' });
-        });
-});
+//         .catch(error => {
+//             console.error('Error requesting Credit Debit Income To User:', error);
+//             res.status(500).json({ error: 'Internal Server Error' });
+//         });
+// });
 
 //admin reset password
 users.post('/1c3bb4525d626c9fabed22789ba34ec12e097222', logMiddleware, (req, res) => {
 
-    resetController.adminResetPassword(req.body, res)
-
-        .catch(error => {
-            console.error('Error requesting Reset Admin Password:', error);
-            res.status(500).json({ error: 'Internal Server Error' });
-        });
+    resetController.adminResetPassword(req.body, res);
 });
 
 
@@ -473,7 +418,7 @@ users.post('/e2eea9ffa100bbd9b7e3ef2b0bafb8f59920cea8', authenticateJWT, logMidd
 });
 
 // unblock user
-users.post('/77651f481820ee7a6d33dfde4579d48715f0d1d9', authenticateJWT, logMiddleware, (req, res) => {
+users.post('/77651f481820ee7a6d33dfde4579d48715f0d1d9', logMiddleware, (req, res) => {
     loginController.unblockByUser(req.body, res)
 
         .catch(error => {
@@ -529,15 +474,13 @@ users.post('/14230cdae5a3d15697bc8f40f03d2efb6e52865c', async (req, res) => {
 });
 
 
-
 users.post('/login', logMiddleware, (req, res) => {
 
-    loginController.login1(req, res);
+    loginController.login(req.body, res);
 });
 
 users.post('/admin_login', logMiddleware, (req, res) => {
-
-    loginController.admin_login(req.body, res);
+    loginController.admin_login(req, res); // pass full req object
 });
 
 users.post('/register', (req, res) => {
@@ -571,30 +514,6 @@ users.post('/get-mpin', (req, res) => {
 });
 
 
-// users.post('/upload-kyc', authenticateJWT, fileUpload, async (req, res) => {
-
-
-//     const userDetails = req.user;
-//     const requestData = req.body;
-//     const combinedData = {...userDetails,...requestData};
-
-// 	//  upload multiple image
-// 	const pan = req.files['panImage'][0];
-// 	const aadhar = req.files['aadharImage'][0];
-// 	const aadharBack = req.files['aadharBackImage'][0];
-// 	const checkbook = req.files['chequeBookImage'][0];
-
-// 	const panImage = pan.filename;
-// 	const aadharImage = aadhar.filename;
-// 	const aadharBackImage = aadharBack.filename;
-// 	const checkbookImage = checkbook.filename;
-// 	kycController.uploadKyc(panImage,aadharImage,aadharBackImage,checkbookImage,combinedData,res ) ;
-
-// });
-
-
-
-
 
 users.post('/get-kyc', async (req, res) => {
 
@@ -602,9 +521,9 @@ users.post('/get-kyc', async (req, res) => {
 });
 
 
-users.post('/get-kyc-report', async (req, res) => {
+users.post('/421abbe46f1f142bd142def0e11ad9f7433adad6', async (req, res) => {
 
-    kycController.getKycReport(req.body, res)
+    kycController.getKycReport(req, res)
 });
 
 // users.post('/get-kyc-report', async (req, res) => {
@@ -619,13 +538,13 @@ users.post('/update-kyc-status', async (req, res) => {
 });
 
 
-users.post('/update-user-status', async (req, res) => {
+users.post('/7e0f025e644befa1fce101beb075a6acc6360b16', async (req, res) => {
 
     loginController.updateUserStatus(req.body, res);
 });
 
 
-users.post('/get-profile', async (req, res) => {
+users.post('/63c6ad33e3395d611c35ed9ef749fd8fe4ae2bb4', async (req, res) => {
 
     loginController.getProfile(req.body, res);
 });
@@ -675,8 +594,7 @@ users.post('/check-old-income-exists', async (req, res) => {
     oldIncomeController.checkIncome(req.body, res);
 });
 
-
-users.post('/credit-debit-income-to-user', async (req, res) => {
+users.post('/d7dfaf86f2ab8c7013f268736ab747e07bd8558e', async (req, res) => {
 
     oldIncomeController.creditDebitIncomeToUser(req.body, res);
 });

@@ -7,8 +7,8 @@ module.exports = (sequelize, DataTypes, Model) => {
 
         static async getData() {
             const Category = await this.findAll({
-            where: {status:1},
-            order: [['id', 'DESC']],
+                where: { status: 1 },
+                order: [['id', 'DESC']],
             });
             return Category;
         }
@@ -21,41 +21,41 @@ module.exports = (sequelize, DataTypes, Model) => {
             });
             return Category;
         }
-        
+
         static async getAllData(whereCondition) {
             try {
-              const result = await this.findAll({
-            
-                attributes: [
-                    'id',
-                    'category_id',
-                    'graphics_name',
-                    'status',
-                    'image',
-                    'like_count',
-                    'share_count',
-                    'created_by',
-                    'modified_by' ,
-                    'cat_group',
-                    [Sequelize.fn('date_format', Sequelize.col('created_on'), '%d-%m-%Y %H:%i:%s'), 'created_on'],
-                    [Sequelize.fn('date_format', Sequelize.col('modified_on'), '%d-%m-%Y %H:%i:%s'), 'modified_on'],
-                ],
-            
-                where: whereCondition,
-                order: [['created_on', 'DESC']],
+                const result = await this.findAll({
+
+                    attributes: [
+                        'id',
+                        'category_id',
+                        'graphics_name',
+                        'status',
+                        'image',
+                        'like_count',
+                        'share_count',
+                        'created_by',
+                        'modified_by',
+                        'cat_group',
+                        [Sequelize.fn('date_format', Sequelize.col('created_on'), '%d-%m-%Y %H:%i:%s'), 'created_on'],
+                        [Sequelize.fn('date_format', Sequelize.col('modified_on'), '%d-%m-%Y %H:%i:%s'), 'modified_on'],
+                    ],
+
+                    where: whereCondition,
+                    order: [['created_on', 'DESC']],
                 });
-            return result;
+                return result;
             } catch (error) {
                 console.error('Error:', error);
                 throw error;
             }
         }
-        
 
-     
+
+
         static async insertData(data) {
             try {
-            const result = await this.create(data);
+                const result = await this.create(data);
                 return result;
             } catch (error) {
                 console.error('Error:', error);
@@ -63,14 +63,14 @@ module.exports = (sequelize, DataTypes, Model) => {
             }
         }
 
-    
-    
-        static async UpdateData(data , whereClause) {
+
+
+        static async UpdateData(data, whereClause) {
             try {
-            
-            const result = await this.update(data, {
-                where: whereClause
-            });
+
+                const result = await this.update(data, {
+                    where: whereClause
+                });
                 return result;
             } catch (error) {
                 console.error('Error:', error);
@@ -78,33 +78,33 @@ module.exports = (sequelize, DataTypes, Model) => {
             }
         }
 
-  
+
 
 
     }
 
-    
 
-      
+
+
 
     graphics.init({
         id: {
-          type: DataTypes.INTEGER,
-          allowNull: false,
-		  primaryKey: true,
-		  autoIncrement: true
+            type: DataTypes.BIGINT,
+            primaryKey: true,
+            autoIncrement: true
         },
+
         category_id: {
-          type: DataTypes.INTEGER,
-          allowNull: false
+            type: DataTypes.INTEGER,
+            allowNull: false
         },
         graphics_name: {
             type: DataTypes.STRING,
             allowNull: false
-          },
-        image : {
-              type: DataTypes.TEXT,
-              allowNull: false
+        },
+        image: {
+            type: DataTypes.TEXT,
+            allowNull: false
         },
         like_count: {
             type: DataTypes.INTEGER,
@@ -119,8 +119,8 @@ module.exports = (sequelize, DataTypes, Model) => {
             allowNull: true
         },
         created_on: {
-              type: DataTypes.DATE,
-              allowNull: true
+            type: DataTypes.DATE,
+            allowNull: true
         },
         created_by: {
             type: DataTypes.INTEGER,
@@ -138,17 +138,17 @@ module.exports = (sequelize, DataTypes, Model) => {
             type: DataTypes.STRING,
             allowNull: true
         },
-        
-  
-      },
-      {
-        sequelize, 
-        modelName: 'graphics',
-        tableName: 'tbl_graphics_report', // specify table name here
-        timestamps: false
-      });
-      
-      return graphics;
+
+
+    },
+        {
+            sequelize,
+            modelName: 'graphics',
+            tableName: 'tbl_graphics_report', // specify table name here
+            timestamps: false
+        });
+
+    return graphics;
 }
 
 

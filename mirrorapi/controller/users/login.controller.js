@@ -23,160 +23,158 @@ class Login {
 
   }
 
- async loginmirror(req,res) {
-	    const decryptedObject = utility.DataDecrypt(req.encReq);
-	    const { username, password } =decryptedObject;
-
-	  
-
-        try {
-                        
-          const getUserSearchByData={ username,mobile:username,mlm_id:username,email:username}
-          const userRow=await this.db.user.getUserSearchByDataWithORStatus(getUserSearchByData);
+  async loginmirror(req, res) {
+    const decryptedObject = utility.DataDecrypt(req.encReq);
+    const { username, password } = decryptedObject;
 
 
 
-          
-                      if (!userRow) {
-                            return res.status(401).json(utility.DataEncrypt(JSON.stringify({ status: 401,token:'',message: 'User not found',data: [] })));
-                          }	
-                          
-                          
-                    if(userRow.status == 0)
-                    {
-                        return res.status(401).json(utility.DataEncrypt(JSON.stringify({ status: 401,token:'',message: 'You are temporarily blocked. Please contact the Support Team at 9112421742.',data: [] })));
-                    }
-                          
-                          
-                    const currentDate = new Date();
-                    const created_on = currentDate.toISOString().replace('T', ' ').replace(/\.\d{3}Z$/, '');
-                 
-                          
-              const passwordMatch = await bcrypt.compare(password, userRow.password);
-              if (passwordMatch ) {
+    try {
 
-                  
-                    // const user_token=await this.db.fcm_notification.getFcmToken(userRow.id);
-                    // const fcmTokens = user_token ? user_token.token : '';
-                    
-                    const userRowDetails=await this.db.userDetails.findOne({
-                          where: {
-                              id: userRow.id
-                          },
-                    });
-                
-                          const userData = { 
-                              id: userRow.id, 
-                              mlm_id: userRow.mlm_id,
-                              first_name: userRow.first_name,  
-                              last_name: userRow.last_name,
-                              username: userRow.username,
-                              email: userRow.email,
-                              mobile: userRow.mobile,
-                              refered_by: userRow.refered_by,
-                              country: userRow.country,
-                              state: userRow.state,
-                              circle: userRow.circle,
-                              district: userRow.district,
-                              division: userRow.division,
-                              region: userRow.region,
-                              block: userRow.block,
-                              pincode: userRow.pincode,
-                              address: userRow.address,
-                              dob: userRow.dob,
-								is_prime:userRowDetails.dataValues.is_prime,
-								 registration_date :userRowDetails.dataValues.registration_date,
-                             
-                            };
+      const getUserSearchByData = { username, mobile: username, mlm_id: username, email: username }
+      const userRow = await this.db.user.getUserSearchByDataWithORStatus(getUserSearchByData);
 
 
-                       
 
 
-                          const token = jwt.sign(userData, 'secretkey', { expiresIn: '30d' });
-                          const refreshToken = jwt.sign(userData, 'secretkey', { expiresIn: '30d' });
-                          
-                          
-                          /*const messages = {
-                            user_id: userRow.id,
-                            service: 'Login', 
-                            message_id: `M${utility.generateUniqueNumeric(7)}`,
-                            msg_notification: `*Dear ${userRow.first_name} ${userRow.last_name}, You are successfully Login into Mirror.*`,
-                            msg_whatsup: `*Dear ${userRow.first_name} ${userRow.last_name}, You are successfully Login into Mirror.*`,
-                            msg_email: `*Dear ${userRow.first_name} ${userRow.last_name}, You are successfully Login into Mirror.*`,
-                            msg_sms: `*Dear ${userRow.first_name} ${userRow.last_name}, You are successfully Login into Mirror.*`,
-                          }
-                          await this.db.messagingService.insertData(messages);
-                          
+      if (!userRow) {
+        return res.status(401).json(utility.DataEncrypt(JSON.stringify({ status: 401, token: '', message: 'User not found', data: [] })));
+      }
 
 
-                          const loginLog = {
-                            user_id: userRow.id,
-                            service_type: 'Login', 
-                          }
-                          await this.db.userService.insertData(loginLog);*/
-
-  
-
-                          if(userData)
-                          {
+      if (userRow.status == 0) {
+        return res.status(401).json(utility.DataEncrypt(JSON.stringify({ status: 401, token: '', message: 'You are temporarily blocked. Please contact the Support Team at 9112421742.', data: [] })));
+      }
 
 
-                              const skey = config.SECRET_KEY;
-                              const data = {
-                                  'user_id': userRow.id,
-                                  'first_name': userRow.first_name,
-                                  'last_name': userRow.last_name,
-                                  'mobile': userRow.mobile,
-                                  'email': userRow.email,
-                                  'mlm_id': userRow.mlm_id, 
-                                  'password': userRow.password, 
-                                  'state': userRow.state, 
-                                  'country': userRow.country, 
-                                  'dob': userRow.dob, 
-                                  'address': userRow.address, 
-                                  'ref_mlm_id': userRowDetails.ref_mlm_id,
-                                };
-                                
-                                const { iv, encryptedData } =  utility.generateAESToken(JSON.stringify(data), skey);
-                        
-                               /* const serializedData = await userUtility.userRegister(encryptedData, iv);
-                                if(serializedData.result)
-                                {
-                                    userData.shopping_id = serializedData.result.response.id;
-                                }*/
-                                
-                          }
-                          
-                          return res.status(200).json(utility.DataEncrypt(JSON.stringify({ status: 200, token: token, refreshToken:refreshToken, message: 'Login successful', data: userData })));
-                          
-                        } else {
-                          return res.status(401).json(utility.DataEncrypt(JSON.stringify({ status: 401, token: '', message: 'Invalid password', data: [] })));
-                    }
-                    
-                    
+      const currentDate = new Date();
+      const created_on = currentDate.toISOString().replace('T', ' ').replace(/\.\d{3}Z$/, '');
+
+
+      const passwordMatch = await bcrypt.compare(password, userRow.password);
+      if (passwordMatch) {
+
+
+        // const user_token=await this.db.fcm_notification.getFcmToken(userRow.id);
+        // const fcmTokens = user_token ? user_token.token : '';
+
+        const userRowDetails = await this.db.userDetails.findOne({
+          where: {
+            id: userRow.id
+          },
+        });
+
+        const userData = {
+          id: userRow.id,
+          mlm_id: userRow.mlm_id,
+          first_name: userRow.first_name,
+          last_name: userRow.last_name,
+          username: userRow.username,
+          email: userRow.email,
+          mobile: userRow.mobile,
+          refered_by: userRow.refered_by,
+          country: userRow.country,
+          state: userRow.state,
+          circle: userRow.circle,
+          district: userRow.district,
+          division: userRow.division,
+          region: userRow.region,
+          block: userRow.block,
+          pincode: userRow.pincode,
+          address: userRow.address,
+          dob: userRow.dob,
+          is_prime: userRowDetails.dataValues.is_prime,
+          registration_date: userRowDetails.dataValues.registration_date,
+
+        };
+
+
+
+
+
+        const token = jwt.sign(userData, 'secretkey', { expiresIn: '30d' });
+        const refreshToken = jwt.sign(userData, 'secretkey', { expiresIn: '30d' });
+
+
+        /*const messages = {
+          user_id: userRow.id,
+          service: 'Login', 
+          message_id: `M${utility.generateUniqueNumeric(7)}`,
+          msg_notification: `*Dear ${userRow.first_name} ${userRow.last_name}, You are successfully Login into Mirror.*`,
+          msg_whatsup: `*Dear ${userRow.first_name} ${userRow.last_name}, You are successfully Login into Mirror.*`,
+          msg_email: `*Dear ${userRow.first_name} ${userRow.last_name}, You are successfully Login into Mirror.*`,
+          msg_sms: `*Dear ${userRow.first_name} ${userRow.last_name}, You are successfully Login into Mirror.*`,
         }
-        catch (err) {
-                logger.error(`Unable to find user: ${err}`);
-    			if (err.name === 'SequelizeValidationError') {
-    			  const validationErrors = err.errors.map((err) => err.message);
-    			  return res.status(500).json(utility.DataEncrypt(JSON.stringify({ status: 500,errors: validationErrors })));
- 
-    			}
-    			 return res.status(500).json(utility.DataEncrypt(JSON.stringify({ status: 500,token:'', message: err,data: []  })));
+        await this.db.messagingService.insertData(messages);
+        
 
-            }
-	
+
+        const loginLog = {
+          user_id: userRow.id,
+          service_type: 'Login', 
+        }
+        await this.db.userService.insertData(loginLog);*/
+
+
+
+        if (userData) {
+
+
+          const skey = config.SECRET_KEY;
+          const data = {
+            'user_id': userRow.id,
+            'first_name': userRow.first_name,
+            'last_name': userRow.last_name,
+            'mobile': userRow.mobile,
+            'email': userRow.email,
+            'mlm_id': userRow.mlm_id,
+            'password': userRow.password,
+            'state': userRow.state,
+            'country': userRow.country,
+            'dob': userRow.dob,
+            'address': userRow.address,
+            'ref_mlm_id': userRowDetails.ref_mlm_id,
+          };
+
+          const { iv, encryptedData } = utility.generateAESToken(JSON.stringify(data), skey);
+
+          /* const serializedData = await userUtility.userRegister(encryptedData, iv);
+           if(serializedData.result)
+           {
+               userData.shopping_id = serializedData.result.response.id;
+           }*/
+
+        }
+
+        return res.status(200).json(utility.DataEncrypt(JSON.stringify({ status: 200, token: token, refreshToken: refreshToken, message: 'Login successful', data: userData })));
+
+      } else {
+        return res.status(401).json(utility.DataEncrypt(JSON.stringify({ status: 401, token: '', message: 'Invalid password', data: [] })));
+      }
 
 
     }
+    catch (err) {
+      logger.error(`Unable to find user: ${err}`);
+      if (err.name === 'SequelizeValidationError') {
+        const validationErrors = err.errors.map((err) => err.message);
+        return res.status(500).json(utility.DataEncrypt(JSON.stringify({ status: 500, errors: validationErrors })));
+
+      }
+      return res.status(500).json(utility.DataEncrypt(JSON.stringify({ status: 500, token: '', message: err, data: [] })));
+
+    }
+
+
+
+  }
 
   async login(req, res) {
     console.log("LOGIN API HIT");
 
     try {
 
-       const decryptedObject = req.body;
+      const decryptedObject = req.body;
       // const decryptedObject = utility.DataDecrypt(req.body.encReq);
       console.log("Request Body:", decryptedObject);
 
@@ -370,7 +368,7 @@ class Login {
 
     try {
 
-       const decryptedObject = req.body;
+      const decryptedObject = req.body;
       //const decryptedObject = utility.DataDecrypt(req.body.encReq);
       console.log("Request Body:", decryptedObject);
 
@@ -531,8 +529,9 @@ class Login {
   }
   async admin_login(req, res) {
 
-    const { username, password, is_admin, captchaToken } = req;
+    const { username, password, is_admin, captchaToken } = req.body;
 
+    console.log("req")
     /* if (!captchaToken) {
          return res.status(400).json({ status: 400, message: 'CAPTCHA verification failed',  data: []});
        }
