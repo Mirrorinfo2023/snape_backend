@@ -200,14 +200,14 @@ report.post('/user-details', async (req, res) => {
 
 });
 
-report.post('/recharge-report', cacheMiddleware(900), async (req, res) => {
+report.post('/recharge-report', async (req, res) => {
     try {
 
-        const key = req.originalUrl;
+        // const key = req.originalUrl;
         const data = await RechangeReportController.recharge(req.body, res);
         // const data = {"message":"testing data.."};
         // Cache the data in Redis
-        await redisClient.setex(key, 900, JSON.stringify(data));
+        // await redisClient.setex(key, 900, JSON.stringify(data));
 
         res.json(data); // Send the response and cache data
     } catch (error) {

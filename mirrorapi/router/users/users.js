@@ -143,7 +143,7 @@ users.post('/check-user-by-mobile', logMiddleware, async (req, res) => {
 
 //Login
 users.post('/2736fab291f04e69b62d490c3c09361f5b82461a', logMiddleware, async (req, res) => {
-    loginController.login(req.body, res)
+    loginController.login(req, res)
 
         .catch(error => {
             console.error('Error requesting Login:', error);

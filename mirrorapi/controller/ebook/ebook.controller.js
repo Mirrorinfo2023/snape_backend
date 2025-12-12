@@ -362,7 +362,6 @@ class Ebook {
         },
       }
 
-
       const report = {
         totalEbookCount: await this.db.ebookList.count(),
         totalpendingEbook: await this.db.ebookList.count({ where: { status: `2` } }),

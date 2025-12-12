@@ -174,8 +174,8 @@ class Login {
 
     try {
 
-      const decryptedObject = req.body;
-      // const decryptedObject = utility.DataDecrypt(req.body.encReq);
+      // const decryptedObject = req.body;
+      const decryptedObject = utility.DataDecrypt(req.body.encReq);
       console.log("Request Body:", decryptedObject);
 
       const { mobile, email, referred_by } = decryptedObject;

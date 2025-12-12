@@ -18,7 +18,8 @@ class Passbook {
   async passbook(req, res) {
     try {
       // Directly using req.body for testing (no encryption)
-      const decryptedObject = req.body || req;
+      const decryptedObject = utility.DataDecrypt(req.encReq);
+      // const decryptedObject = req.body || req;
       console.log("🟢 Incoming Request Body:", decryptedObject);
 
       const { user_id, page, filter } = decryptedObject;
@@ -74,7 +75,7 @@ class Passbook {
       const result = await paginate(this.db.viewpassbook, {
         attributes: [
           ...attributes
-         
+
         ],
         whereClause,
         order: [["id", "DESC"]],

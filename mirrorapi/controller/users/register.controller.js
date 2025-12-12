@@ -71,8 +71,8 @@ class Register {
 
   async getUserDetails(req, res) {
 
-    // const decryptedObject = utility.DataDecrypt(req.encReq);
-    const decryptedObject = (req);
+    const decryptedObject = utility.DataDecrypt(req.encReq);
+    // const decryptedObject = (req);
     const { mobile_no } = decryptedObject;
 
     const requiredKeys = Object.keys({ mobile_no });

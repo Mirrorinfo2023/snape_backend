@@ -174,30 +174,15 @@ class Feedback {
 
   async getFeedbackReport(req, res) {
     try {
-      //console.log("💡 Incoming request body:", req.body);
+      const { from_date, to_date } = req.body;
 
-      // 🔹 Validate and decrypt incoming payload
-      if (!req.body?.data) {
-        //console.log("❌ Missing encrypted data field");
-        const encryptedResp = utility.DataEncrypt(
-          JSON.stringify({ status: 400, message: "Missing encrypted data field", data: [] })
-        );
-        return res.status(400).json({ data: encryptedResp });
+      if (!from_date || !to_date) {
+        return res.status(400).json({
+          status: 400,
+          message: "from_date and to_date are required",
+          data: []
+        });
       }
-
-      let payload;
-      try {
-        payload = utility.DataDecrypt(req.body.data);
-        //console.log("🔓 Decrypted payload:", payload);
-      } catch (err) {
-        //console.log("❌ Invalid encrypted payload", err);
-        const encryptedResp = utility.DataEncrypt(
-          JSON.stringify({ status: 400, message: "Invalid encrypted payload", data: [] })
-        );
-        return res.status(400).json({ data: encryptedResp });
-      }
-
-      const { from_date, to_date } = payload;
 
       const startDate = new Date(from_date);
       const endDate = new Date(to_date);
@@ -207,49 +192,38 @@ class Feedback {
         created_on: { [Op.between]: [startDate, endDate] },
       };
 
-      //console.log("📅 Query date range:", startDate, "to", endDate);
-
-      // 🔹 Counts
       const report = {
-        totalFeedbackCount: await this.db.feedback_view.count({ where: { ...whereCondition } }),
-        totalResolveFeedback: await this.db.feedback_view.count({ where: { status: 1, ...whereCondition } }),
-        totalHoldFeedback: await this.db.feedback_view.count({ where: { status: 2, ...whereCondition } }),
-        totalPendingFeedback: await this.db.feedback_view.count({ where: { status: 3, ...whereCondition } }),
+        totalFeedbackCount: await this.db.feedback.count({ where: whereCondition }),
+        totalResolveFeedback: await this.db.feedback.count({ where: { status: 1, ...whereCondition } }),
+        totalHoldFeedback: await this.db.feedback.count({ where: { status: 2, ...whereCondition } }),
+        totalPendingFeedback: await this.db.feedback.count({ where: { status: 3, ...whereCondition } }),
       };
 
-      //console.log("📊 Report counts:", report);
-
-      // 🔹 Fetch feedback data
-      const result = await this.db.feedback_view.getAllData(whereCondition);
+      const result = await this.db.feedback.getAllData(whereCondition);
 
       const feedbackResult = result.map(item => ({
         ...item.dataValues,
         img: baseurl + item.img,
       }));
 
-      //console.log("📄 Fetched feedback results:", feedbackResult);
-
-      // 🔹 Encrypt and send response
-      const encryptedResp = utility.DataEncrypt(
-        JSON.stringify({ status: 200, message: "success", data: feedbackResult, report })
-      );
-
-      //console.log("🔒 Encrypted response:", encryptedResp);
-
-      return res.status(200).json({ data: encryptedResp });
+      return res.status(200).json({
+        status: 200,
+        message: "success",
+        data: feedbackResult,
+        report
+      });
 
     } catch (error) {
       console.error("⚠️ Unable to fetch feedback:", error);
 
-      const encryptedError = utility.DataEncrypt(
-        JSON.stringify({ status: 500, message: error.message || "Server Error", data: [], report: {} })
-      );
-      return res.status(500).json({ data: encryptedError });
+      return res.status(500).json({
+        status: 500,
+        message: error.message || "Server Error",
+        data: [],
+        report: {}
+      });
     }
   }
-
-
-
 
 
 

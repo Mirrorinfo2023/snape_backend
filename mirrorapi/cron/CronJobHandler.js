@@ -26,7 +26,7 @@ class CronJobHandler {
         
         
      /************************************REFER ID JOB**************************************************/   
-        cron.schedule('* 5-23 * * *', cronJobidslevel.ReferIDJob.bind(cronJobidslevel));
+        // cron.schedule('* 5-23 * * *', cronJobidslevel.ReferIDJob.bind(cronJobidslevel));
         
        
      /************************************REFERRAL JOB**************************************************/

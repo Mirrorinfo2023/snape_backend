@@ -392,7 +392,7 @@ class ProductPackage {
         }
       };
 
-      const results = await this.db.ViewPackagePurchase.findAll({
+      const results = await this.db.PackagePurchase.findAll({
         where: {
           ...whereCondition
         },

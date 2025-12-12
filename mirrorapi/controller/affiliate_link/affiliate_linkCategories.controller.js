@@ -42,7 +42,7 @@ class Insuarnce {
 
     }
     catch (err) {
-      logger.error(`Unable to find Insuarnce: ${err}`);
+      // logger.error(`Unable to find Insuarnce: ${err}`);
       if (err.name === 'SequelizeValidationError') {
         const validationErrors = err.errors.map((err) => err.message);
         return res.status(500).json(utility.DataEncrypt(JSON.stringify({ status: 500, errors: validationErrors })));
@@ -297,7 +297,7 @@ class Insuarnce {
       }
 
     } catch (error) {
-      logger.error(`Unable to find link: ${error}`);
+      // logger.error(`Unable to find link: ${error}`);
       if (error.name === 'SequelizeValidationError') {
         const validationErrors = error.errors.map((err) => err.message);
         return res.status(500).json({ status: 500, errors: validationErrors });
