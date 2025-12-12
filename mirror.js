@@ -33,7 +33,7 @@ const corsOptions = {
     } else {
       callback(new Error('Not allowed by CORS'));
     }
-     //callback(null, true);
+    //callback(null, true);
   },
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   optionsSuccessStatus: 204, // For preflight requests
@@ -69,14 +69,14 @@ app.use(
     frameguard: {
       action: 'deny',
     },
-     hsts: {
+    hsts: {
       maxAge: 31536000,  // 1 year in seconds
       includeSubDomains: true,
       preload: true,
     },
     nosniff: true,
     ieNoOpen: true,
-     dnsPrefetchControl: {
+    dnsPrefetchControl: {
       allow: false,
     },
     // Enable XSS filter (setOnOldIE is false by default)
@@ -89,9 +89,9 @@ app.use(requestIp.mw());
 // app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use((req, res, next) => {
-    const ipAddress = req.clientIp || 'unknown';
-    req.clientIpAddress = ipAddress;
-    next();
+  const ipAddress = req.clientIp || 'unknown';
+  req.clientIpAddress = ipAddress;
+  next();
 });
 //image optimisation
 
@@ -102,19 +102,19 @@ const initializeRedis = require('./redis');
 const redisClient = initializeRedis();
 app.get('/redis-cache-flushall', async (req, res) => {
 
-     redisClient.flushall((err, reply) => {
-        if (err) {
-            console.error('Error flushing Redis:', err);
-            return res.status(500).send('Internal Server Error');
-        }
-        console.log('Redis flushed successfully:', reply);
-        res.send('Redis flushed successfully!');
-    });
-    
- });
- 
- 
- 
+  redisClient.flushall((err, reply) => {
+    if (err) {
+      console.error('Error flushing Redis:', err);
+      return res.status(500).send('Internal Server Error');
+    }
+    console.log('Redis flushed successfully:', reply);
+    res.send('Redis flushed successfully!');
+  });
+
+});
+
+
+
 
 const port = 4112;
 
@@ -348,6 +348,8 @@ app.use('/api/partner', partner);
 const cart = require('./mirrorapi/router/cart/cart');
 app.use('/api/cart', cart);
 
+const privacypolicy = require('./mirrorapi/router/policy/policyRoutes');
+app.use('/api/policy', privacypolicy);
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
