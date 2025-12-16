@@ -58,22 +58,11 @@ policy.post('/policy/category', (req, res) => {
 
 
 // Update policy category (CLEAR)
-policy.put('/policy/category/:id', (req, res) => {
+policy.post('/policy/category/:id', (req, res) => {
     policyController.updatePolicyCategory(req, res)
         .then(data => res.json(data))
         .catch(error => {
             console.error('Error updating policy category:', error);
-            res.status(500).json({ error: 'Internal Server Error' });
-        });
-});
-
-
-// Update category status (CLEAR)
-policy.patch('/policy/category/:id/status', (req, res) => {
-    policyController.updateCategoryStatus(req, res)
-        .then(data => res.json(data))
-        .catch(error => {
-            console.error('Error updating category status:', error);
             res.status(500).json({ error: 'Internal Server Error' });
         });
 });
@@ -109,28 +98,28 @@ policy.post('/add-policy', (req, res) => {
 
 
 // Update policy (CLEAR)
-policy.put('/update-policy/:id', (req, res) => {
+policy.post('/update-policy/:id', (req, res) => {
     policyController.updatePolicy(req, res);
 });
 
 
 
 // Update policy status (CLEAR)
-policy.patch('/update-policy-status/:id', (req, res) => {
+policy.post('/update-policy-status/:id', (req, res) => {
     policyController.updatePolicyStatus(req, res)
       
 });
 
 
 // Delete policy (CLEAR)
-policy.delete('/delete-policy/:id', (req, res) => {
+policy.post('/post-policy/:id', (req, res) => {
     policyController.deletePolicy(req, res)
        
 });
 
 
 // Get active policy by category - PUBLIC (CLEAR)
-policy.get('/get-policy-details', (req, res) => {
+policy.post('/get-policy-details', (req, res) => {
     policyController.getActivePolicyByCategory(req, res)
         
 });

@@ -2,8 +2,9 @@ const express = require('express');
 const bannerController = require('../../controller/banners/banner.controller');
 const authenticateJWT = require('../../middleware/authMiddleware');
 const logMiddleware = require('../../middleware/logMiddleware');
-
+const fs = require("fs");
 const { configureMulter } = require('../../utility/upload.utility');
+const path = require("path");
 
 const destinationPath = 'uploads/banners';
 
@@ -64,7 +65,7 @@ banner.post('/ddeb0530275df10eb908150c0c14f0a7c10dd586', logMiddleware, authenti
 banner.get('/66a815be731fee133d7ecc8f240447c14e770b83', logMiddleware, (req, res) => {
 
 	bannerController.getBannerCategory(req, res)
-	
+
 });
 
 //add-new-banner
@@ -134,14 +135,48 @@ banner.post('/848c9e6b17fd0bab24254d057a09a88e8db32bcc', logMiddleware, (req, re
 banner.get("/list-banner-images", (req, res) => bannerController.getAllBannerImages(req, res));
 
 banner.post("/banner-report-categorywise", (req, res) =>
-  bannerController.getBannerReportbycategory(req, res)
+	bannerController.getBannerReportbycategory(req, res)
 );
 
 banner.post("/66a815be731fee133d7ecc8f240447c14e77083e", (req, res) =>
-  bannerController.addBannerCategory(req, res)
+	bannerController.addBannerCategory(req, res)
 );
 banner.post("/66a815be731fee133d7ecc8f240447c14e77000", (req, res) =>
-  bannerController.addAppType(req, res)
+	bannerController.addAppType(req, res)
+);
+
+// Upload wallpaper banner
+banner.post("/add-wallpaper-banner/:user_id", (req, res, next) => {
+	try {
+		const { user_id } = req.params;
+
+		if (!user_id) {
+			return res.status(400).json({ status: 400, message: "user_id required" });
+		}
+
+		const fs = require("fs");
+		const destinationPath = `uploads/userwallpapers/${user_id}`;
+
+		if (!fs.existsSync(destinationPath)) {
+			fs.mkdirSync(destinationPath, { recursive: true });
+		}
+
+		configureMulter(destinationPath).single("wallpaper_img")(req, res, next);
+	} catch (err) {
+		return res.status(400).json({ status: 400, message: err.message });
+	}
+},
+	async (req, res) => {
+		if (!req.file) {
+			return res.status(400).json({ status: 400, message: "Image required" });
+		}
+
+		return bannerController.uploadWallpaper(req, res);
+	}
+);
+
+banner.post("/get-wallpaper-banner", (req, res) =>
+	bannerController.getuserwallpaperBanner(req, res)
 );
 
 module.exports = banner;

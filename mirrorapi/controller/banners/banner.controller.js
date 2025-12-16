@@ -459,7 +459,7 @@ class Banner {
     try {
       // 🔓 Decrypt incoming encrypted form field
       const decrypted = utility.DataDecrypt(req.body.data);
-      console.log("decrypted ",decrypted)
+      console.log("decrypted ", decrypted)
       const { title, categoryId, app_id } = decrypted;
 
       if (!title || !categoryId) {
@@ -666,6 +666,97 @@ class Banner {
   }
 
 
+  async uploadWallpaper(req, res) {
+    try {
+      const { user_id } = req.params;
+      const filename = req.file?.filename;
+
+      if (!user_id) {
+        return res.status(400).json({
+          status: 400,
+          message: "user_id required",
+          data: []
+        });
+      }
+
+      if (!filename) {
+        return res.status(400).json({
+          status: 400,
+          message: "Image not uploaded",
+          data: []
+        });
+      }
+
+      const wallpaperPath = `/uploads/userwallpapers/${user_id}/${filename}`;
+
+      // ✅ Single call (insert or update)
+      await this.db.userWallpaperBanner.upsertBanner({
+        user_id,
+        wallpaper_img: wallpaperPath
+      });
+
+      return res.status(200).json({
+        status: 200,
+        message: "Wallpaper banner uploaded successfully",
+        data: {
+          user_id,
+          wallpaper_img: wallpaperPath
+        }
+      });
+
+    } catch (err) {
+      console.error("❌ uploadWallpaper error:", err);
+
+      return res.status(500).json({
+        status: 500,
+        message: "Internal Server Error",
+        data: []
+      });
+    }
+  }
+
+
+
+  // ✅ GET banner by user
+  async getuserwallpaperBanner(req, res) {
+    try {
+      const { user_id } = req.body;
+
+      if (!user_id) {
+        return res.status(400).json({
+          status: 400,
+          message: "user_id is required",
+          data: []
+        });
+      }
+
+      const banner = await this.db.userWallpaperBanner.getByUserId(user_id);
+
+      if (!banner) {
+        return res.status(200).json({
+          status: 200,
+          message: "No wallpaper banner found",
+          data: []
+        });
+      }
+
+      // Send all fields from the DB record
+      return res.status(200).json({
+        status: 200,
+        message: "Wallpaper banner fetched successfully",
+        data: banner // Entire record
+      });
+
+    } catch (err) {
+      console.error("❌ getuserwallpaperBanner error:", err);
+
+      return res.status(500).json({
+        status: 500,
+        message: "Internal Server Error",
+        data: []
+      });
+    }
+  }
 
 
 }

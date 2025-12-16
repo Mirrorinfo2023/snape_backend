@@ -655,8 +655,8 @@ class Policy {
     // Get active policy by category (for public display)
     async getActivePolicyByCategory(req, res) {
         try {
-            const decryptedObject = req.body.encReq ? DataDecrypt(req.body.encReq) : req.params;
-            // const decryptedObject = req.body;
+            // const decryptedObject = req.body.encReq ? DataDecrypt(req.body.encReq) : req.params;
+            const decryptedObject = req.body;
             const { category } = decryptedObject;
 
             // Find category by name

@@ -103,6 +103,7 @@ const connect = () => {
   db.banner = require("../model/banner/banner.model")(sequelize, DataTypes, Model);
   db.bannerCategory = require("../model/banner/bannerCategory.model")(sequelize, DataTypes, Model);
   db.view_banner = require("../model/banner/view_banner.model")(sequelize, DataTypes, Model);
+  db.userWallpaperBanner = require("../model/banner/userWallpaperBanner.model.js")(sequelize, DataTypes, Model);
   db.partner = require("../model/partners/partner.model.js")(sequelize, DataTypes, Model);
   /**************************************END*****Business Page**************************END**********************/
 
