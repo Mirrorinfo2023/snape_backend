@@ -118,7 +118,6 @@ class Banner {
 
   async getBannerReport(req, res) {
     try {
-
       // 🔓 Step 1: Decrypt incoming data
       const encrypted = req.body?.data;
       if (!encrypted) {
@@ -128,12 +127,8 @@ class Banner {
         });
       }
 
-      // ✅ FIX: Remove extra JSON.parse
+      // Decrypt the data
       const decryptedData = utility.DataDecrypt(encrypted);
-
-      // If your decrypt function returns stringified JSON, uncomment this:
-      // const decrypted = JSON.parse(decryptedData);
-      // Otherwise, if it already returns an object:
       const decrypted = typeof decryptedData === "string" ? JSON.parse(decryptedData) : decryptedData;
 
       const { from_date, to_date } = decrypted;
@@ -146,22 +141,57 @@ class Banner {
         created_on: { [Op.between]: [startDate, endDate] },
       };
 
-      // ✅ Fetch banners
+      // ✅ Fetch banners with all fields including address
       const banners = await this.db.banner.findAll({
         where: whereCondition,
         order: [["created_on", "DESC"]],
       });
 
-      const bannerResult = banners.map((bannerItem) => ({
-        id: bannerItem.id,
-        title: bannerItem.title,
-        img: bannerItem.img,
-        type_id: bannerItem.type_id,
-        banner_for: bannerItem.banner_for,
-        created_on: bannerItem.created_on,
-        status: bannerItem.status,
-        app_id: bannerItem.app_id,
-      }));
+      // Format banner results with address information
+      const bannerResult = banners.map((bannerItem) => {
+        // Create a full address string from components
+        let fullAddress = "";
+        if (bannerItem.address) {
+          fullAddress = bannerItem.address;
+        } else if (bannerItem.post_office_name || bannerItem.city || bannerItem.state) {
+          const parts = [];
+          if (bannerItem.post_office_name) parts.push(bannerItem.post_office_name);
+          if (bannerItem.city) parts.push(bannerItem.city);
+          if (bannerItem.state) parts.push(bannerItem.state);
+          if (bannerItem.pincode) parts.push(`Pincode: ${bannerItem.pincode}`);
+          fullAddress = parts.join(", ");
+        }
+
+        return {
+          id: bannerItem.id,
+          title: bannerItem.title,
+          img: bannerItem.img,
+          type_id: bannerItem.type_id,
+          banner_for: bannerItem.banner_for,
+          created_on: bannerItem.created_on,
+          status: bannerItem.status,
+          app_id: bannerItem.app_id,
+
+          // Address fields - individual components
+          address: bannerItem.address,
+          pincode: bannerItem.pincode,
+          state: bannerItem.state,
+          city: bannerItem.city,
+          post_office_name: bannerItem.post_office_name,
+          circle: bannerItem.circle,
+          district: bannerItem.district,
+          division: bannerItem.division,
+          region: bannerItem.region,
+
+          // Full formatted address for display
+          full_address: fullAddress || null,
+
+          // Status text for display
+          status_text: bannerItem.status === 1 ? "Active" :
+            bannerItem.status === 2 ? "Inactive" :
+              "Deleted"
+        };
+      });
 
       const report = {
         total_count: await this.db.banner.count({ where: whereCondition }),
@@ -174,6 +204,28 @@ class Banner {
         total_deleted: await this.db.banner.count({
           where: { ...whereCondition, status: 0 },
         }),
+
+        // Optional: Address statistics
+        with_address: await this.db.banner.count({
+          where: {
+            ...whereCondition,
+            [Op.or]: [
+              { pincode: { [Op.ne]: null } },
+              { state: { [Op.ne]: null } },
+              { city: { [Op.ne]: null } },
+              { address: { [Op.ne]: null } }
+            ]
+          },
+        }),
+        without_address: await this.db.banner.count({
+          where: {
+            ...whereCondition,
+            pincode: null,
+            state: null,
+            city: null,
+            address: null
+          },
+        })
       };
 
       // ✅ Encrypt final response
@@ -182,6 +234,11 @@ class Banner {
         message: bannerResult.length > 0 ? "Banners Found" : "Banners Not Found",
         data: bannerResult,
         report,
+        // Optional: Address summary
+        address_summary: {
+          banners_with_address: bannerResult.filter(b => b.pincode || b.state || b.city || b.address).length,
+          banners_without_address: bannerResult.filter(b => !b.pincode && !b.state && !b.city && !b.address).length
+        }
       };
 
       const encryptedResponse = utility.DataEncrypt(JSON.stringify(responseData));
@@ -190,11 +247,15 @@ class Banner {
 
     } catch (err) {
       console.error("❌ Banner Report Error:", err);
-      return res.status(500).json({
+
+      // Send encrypted error response
+      const errorResponse = utility.DataEncrypt(JSON.stringify({
         status: 500,
-        message: err.message || err,
-        data: [],
-      });
+        message: err.message || "Internal server error",
+        data: []
+      }));
+
+      return res.status(500).json({ data: errorResponse });
     }
   }
 
@@ -341,6 +402,147 @@ class Banner {
     }
   }
 
+  // Add this method to your bannerController.js
+
+  async getBannersByLocation(req, res) {
+    try {
+      const { location, location_type = "pincode" } = req.body;
+
+      if (!location) {
+        return res.status(400).json({
+          status: 400,
+          message: "Location parameter is required",
+          data: []
+        });
+      }
+
+      // Build where condition based on location type
+      let whereCondition = {
+        status: 1
+      };
+
+      switch (location_type.toLowerCase()) {
+        case "pincode":
+          whereCondition.pincode = location;
+          break;
+
+        case "city":
+          whereCondition.city = { [Op.like]: `%${location}%` };
+          break;
+
+        case "state":
+          whereCondition.state = { [Op.like]: `%${location}%` };
+          break;
+
+        case "district":
+          whereCondition.district = { [Op.like]: `%${location}%` };
+          break;
+
+        case "all":
+          whereCondition = {
+            status: 1,
+            [Op.or]: [
+              { pincode: location },
+              { state: { [Op.like]: `%${location}%` } },
+              { city: { [Op.like]: `%${location}%` } },
+              { district: { [Op.like]: `%${location}%` } },
+              { post_office_name: { [Op.like]: `%${location}%` } },
+              { address: { [Op.like]: `%${location}%` } }
+            ]
+          };
+          break;
+
+        default:
+          whereCondition.pincode = location;
+      }
+
+      // Fetch banners
+      const banners = await this.db.banner.findAll({
+        where: whereCondition,
+        order: [["created_on", "DESC"]]
+      });
+
+      // Format response
+      const bannerResult = banners.map((banner) => {
+        let fullAddress = banner.address || [
+          banner.post_office_name,
+          banner.city,
+          banner.state,
+          banner.pincode ? `Pincode: ${banner.pincode}` : null
+        ].filter(Boolean).join(", ");
+
+        return {
+          id: banner.id,
+          title: banner.title,
+          img: banner.img,
+          type_id: banner.type_id,
+          banner_for: banner.banner_for,
+          created_on: banner.created_on,
+          status: banner.status,
+          app_id: banner.app_id,
+
+          address: banner.address,
+          pincode: banner.pincode,
+          state: banner.state,
+          city: banner.city,
+          post_office_name: banner.post_office_name,
+          circle: banner.circle,
+          district: banner.district,
+          division: banner.division,
+          region: banner.region,
+
+          full_address: fullAddress || null,
+          status_text:
+            banner.status === 1 ? "Active" :
+              banner.status === 2 ? "Inactive" : "Deleted",
+
+          location_match_score: 100
+        };
+      });
+
+      const totalInLocation = bannerResult.length;
+      const totalBanners = await this.db.banner.count({ where: { status: 1 } });
+
+      return res.status(200).json({
+        status: 200,
+        message: bannerResult.length
+          ? "Banners found for location"
+          : "No banners found for the specified location",
+        data: bannerResult,
+        location_info: {
+          search_location: location,
+          search_type: location_type,
+          total_banners_in_location: totalInLocation,
+          total_banners_overall: totalBanners,
+          percentage:
+            totalBanners > 0
+              ? Math.round((totalInLocation / totalBanners) * 100)
+              : 0
+        },
+        filters: {
+          by_pincode: await this.db.banner.count({
+            where: { status: 1, pincode: location }
+          }),
+          by_city: await this.db.banner.count({
+            where: { status: 1, city: { [Op.like]: `%${location}%` } }
+          }),
+          by_state: await this.db.banner.count({
+            where: { status: 1, state: { [Op.like]: `%${location}%` } }
+          })
+        }
+      });
+
+    } catch (err) {
+      console.error("❌ Get Banners by Location Error:", err);
+
+      return res.status(500).json({
+        status: 500,
+        message: err.message || "Internal server error",
+        data: []
+      });
+    }
+  }
+
 
 
   async updateBannerStatus(req, res) {
@@ -460,7 +662,20 @@ class Banner {
       // 🔓 Decrypt incoming encrypted form field
       const decrypted = utility.DataDecrypt(req.body.data);
       console.log("decrypted ", decrypted)
-      const { title, categoryId, app_id } = decrypted;
+      const {
+        title,
+        categoryId,
+        app_id,
+        pincode,
+        state,
+        city,
+        address,
+        postOfficeName,
+        circle,
+        district,
+        division,
+        region
+      } = decrypted;
 
       if (!title || !categoryId) {
         const encryptedResp = utility.DataEncrypt(
@@ -490,6 +705,15 @@ class Banner {
         img: signedUrl,
         banner_for: "App",
         created_on: new Date().toISOString().replace("T", " ").replace(/\.\d{3}Z$/, ""),
+        pincode,
+        state,
+        city,
+        address,
+        post_office_name: postOfficeName,
+        circle,
+        district,
+        division,
+        region
       });
 
       if (result) {

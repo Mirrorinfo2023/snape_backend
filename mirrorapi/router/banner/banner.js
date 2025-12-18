@@ -68,6 +68,12 @@ banner.get('/66a815be731fee133d7ecc8f240447c14e770b83', logMiddleware, (req, res
 
 });
 
+// GET banners by location
+banner.post('/get-by-location', logMiddleware, (req, res) => {
+  bannerController.getBannersByLocation(req, res);
+});
+
+
 //add-new-banner
 // banner.post('/848c9e6b17fd0bab24254d057a09a88e8db32bcc', logMiddleware, authenticateJWT, (req, res) => {
 // 	const fileName = req.file;

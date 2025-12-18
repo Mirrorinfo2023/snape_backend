@@ -1,12 +1,9 @@
-// Define the Countries model
+// Define the banner model
 module.exports = (sequelize, DataTypes, Model) => {
-
   class banner extends Model {
-
     static async getBanner(type_id) {
       try {
         const banner = await this.findAll({
-
           where: {
             type_id: type_id,
             status: 1
@@ -17,9 +14,7 @@ module.exports = (sequelize, DataTypes, Model) => {
       } catch (err) {
         logger.error(`Unable to find Banner: ${err}`);
       }
-
     }
-
 
     static async insertData(data) {
       try {
@@ -33,7 +28,6 @@ module.exports = (sequelize, DataTypes, Model) => {
 
     static async UpdateData(data, whereClause) {
       try {
-        // console.log(data);
         const result = await this.update(data, {
           where: whereClause
         });
@@ -44,7 +38,6 @@ module.exports = (sequelize, DataTypes, Model) => {
       }
     }
   }
-
 
   banner.init({
     id: {
@@ -57,7 +50,6 @@ module.exports = (sequelize, DataTypes, Model) => {
       type: DataTypes.STRING,
       allowNull: false
     },
-
     img: {
       type: DataTypes.TEXT,
       allowNull: false
@@ -102,18 +94,49 @@ module.exports = (sequelize, DataTypes, Model) => {
       type: DataTypes.INTEGER,
       allowNull: true
     },
-
-
-
-  },
-    {
-      sequelize,
-      modelName: 'banner',
-      tableName: 'tbl_banners', // specify table name here
-      timestamps: false
-    });
+    // Add new address fields
+    pincode: {
+      type: DataTypes.STRING(10),
+      allowNull: true
+    },
+    state: {
+      type: DataTypes.STRING(100),
+      allowNull: true
+    },
+    city: {
+      type: DataTypes.STRING(100),
+      allowNull: true
+    },
+    address: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    post_office_name: {
+      type: DataTypes.STRING(255),
+      allowNull: true
+    },
+    circle: {
+      type: DataTypes.STRING(100),
+      allowNull: true
+    },
+    district: {
+      type: DataTypes.STRING(100),
+      allowNull: true
+    },
+    division: {
+      type: DataTypes.STRING(100),
+      allowNull: true
+    },
+    region: {
+      type: DataTypes.STRING(100),
+      allowNull: true
+    }
+  }, {
+    sequelize,
+    modelName: 'banner',
+    tableName: 'tbl_banners',
+    timestamps: false
+  });
 
   return banner;
-}
-
-
+};
