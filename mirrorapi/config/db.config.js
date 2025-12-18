@@ -349,6 +349,7 @@ const connect = () => {
   /*************************************************Start mobileplan model**************************************************************/
 
   db.mobileplan = require("../model/plan/mobileplan.model.js")(sequelize, DataTypes, Model);
+  db.deviceinfo = require("../model/user/users_deviceinfo.model.js")(sequelize, DataTypes, Model);
   db.Policy = require("../model/privacypolicy/Policy.model.js")(sequelize, DataTypes, Model);
   db.PolicyCategory = require("../model/privacypolicy/PolicyCategory.model.js")(sequelize, DataTypes, Model);
 

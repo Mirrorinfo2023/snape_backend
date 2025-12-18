@@ -7,6 +7,7 @@ const oldIncomeController = require('../../controller/users/get_old_income.contr
 const QrGenerateController = require('../../controller/users/qrGenerate.controller');
 const dashboardController = require('../../controller/users/dashboard.controller');
 const idCardController = require('../../controller/users/idCard.controller');
+const userdeviceinfo = require('../../controller/users/users_deviceinfo.controller');
 const path = require("path");
 const uploadFileToB2 = require('../../utility/b2Upload.utility'); // new B2 uploader
 // const cronController = require('../../cron/orders/order.cron');
@@ -669,6 +670,17 @@ users.post('/admin-dashboard', async (req, res) => {
 users.post('/getDashboard_API', async (req, res) => {
 
     dashboardController.getDashboardAPI(req.body, res);
+});
+
+// deviceinfo controller apis
+users.post('/add-device-info', async (req, res) => {
+
+    userdeviceinfo.addDeviceInfo(req, res);
+});
+
+users.post('/get-device-info', async (req, res) => {
+
+    userdeviceinfo.getUserDevices(req, res);
 });
 
 module.exports = users;
