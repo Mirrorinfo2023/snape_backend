@@ -68,10 +68,10 @@ policy.post('/policy/category/:id', (req, res) => {
 });
 
 
-// Get all policies (CLEAR)
-policy.get('/d2e3f4g5h6i7j8k9l0m1n2o3p4q5r6s7t8u9v0', (req, res) => {
-    policyController.getAllPolicies(req, res)
-});
+policy.get('/d2e3f4g5h6i7j8k9l0m1n2o3p4q5r6s7t8u9v0',
+    (req, res) => policyController.getAllPolicies(req, res)
+);
+
 
 // Get policy by ID (HASHED)
 policy.get(`/${endpoints['/policy/:id']}/:id`, logMiddleware, (req, res) => {
@@ -86,42 +86,38 @@ policy.get(`/${endpoints['/policy/:id']}/:id`, logMiddleware, (req, res) => {
 // Get policy by ID (CLEAR)
 policy.get('/policy-details-byid', (req, res) => {
     policyController.getPolicyById(req, res)
-      
+
 });
 
-
-// Create policy (CLEAR)
+// Create policy
 policy.post('/add-policy', (req, res) => {
-    policyController.createPolicy(req, res)
-
+    policyController.createPolicy(req, res);
 });
 
-
-// Update policy (CLEAR)
+// Update policy
 policy.post('/update-policy/:id', (req, res) => {
     policyController.updatePolicy(req, res);
 });
 
 
-
 // Update policy status (CLEAR)
 policy.post('/update-policy-status/:id', (req, res) => {
     policyController.updatePolicyStatus(req, res)
-      
+
 });
 
 
 // Delete policy (CLEAR)
 policy.post('/post-policy/:id', (req, res) => {
     policyController.deletePolicy(req, res)
-       
+
 });
 
 
 // Get active policy by category - PUBLIC (CLEAR)
 policy.post('/get-policy-details', (req, res) => {
     policyController.getActivePolicyByCategory(req, res)
-        
+
 });
 
 module.exports = policy;

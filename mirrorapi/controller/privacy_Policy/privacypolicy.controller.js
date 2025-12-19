@@ -11,7 +11,7 @@ class Policy {
     // Get all policy categories
     async getPolicyCategories(req, res) {
         try {
-            const decryptedObject = req.encReq ? DataDecrypt(req.encReq) : req.query;
+            const decryptedObject = req.body.encReq ? DataDecrypt(req.body.encReq) : req.query;
             const { searchTerm = '', page = 1, limit = 10 } = decryptedObject;
 
             const pages = parseInt(page) || 1;
@@ -297,31 +297,31 @@ class Policy {
     // Get all policies with categories
     async getAllPolicies(req, res) {
         try {
-            const decryptedObject = req.encReq ? DataDecrypt(req.encReq) : req.query;
             const {
                 searchTerm = '',
                 category_id = '',
                 status = '',
                 page = 1,
                 limit = 10
-            } = decryptedObject;
+            } = req.query;
 
-            const pages = parseInt(page) || 1;
-            const pageSize = parseInt(limit) || 10;
+            const pages = parseInt(page, 10) || 1;
+            const pageSize = parseInt(limit, 10) || 10;
             const offset = (pages - 1) * pageSize;
 
             let whereClause = {};
-            let categoryWhereClause = {};
 
             if (searchTerm) {
-                whereClause.content = { [this.db.Sequelize.Op.like]: `%${searchTerm}%` };
+                whereClause.content = {
+                    [this.db.Sequelize.Op.like]: `%${searchTerm}%`
+                };
             }
 
             if (category_id) {
                 whereClause.category_id = category_id;
             }
 
-            if (status) {
+            if (status !== '') {
                 whereClause.status = status;
             }
 
@@ -331,23 +331,31 @@ class Policy {
                     model: this.db.PolicyCategory,
                     as: 'category',
                     attributes: ['id', 'category_name', 'status'],
-                    where: categoryWhereClause,
                     required: false
                 }],
                 order: [['created_on', 'DESC']],
                 limit: pageSize,
-                offset: offset
+                offset
             });
 
-            // Get stats
-            const totalCount = await this.db.Policy.count();
-            const totalActive = await this.db.Policy.count({ where: { status: 1 } });
-            const totalInactive = await this.db.Policy.count({ where: { status: 2 } });
+            // Convert Sequelize rows → plain objects
+            const policies = rows.map(row => {
+                const p = row.get({ plain: true });
+                return {
+                    id: p.id,
+                    category_id: p.category_id,
+                    category_name: p.category?.category_name || null,
+                    content: p.content,
+                    status: p.status,
+                    created_on: p.created_on,
+                    updated_on: p.updated_on
+                };
+            });
 
-            const response = {
+            return res.status(200).json({
                 status: 200,
                 message: 'Policies fetched successfully',
-                data: rows,
+                data: policies,
                 pagination: {
                     page: pages,
                     limit: pageSize,
@@ -355,31 +363,23 @@ class Policy {
                     totalPages: Math.ceil(count / pageSize)
                 },
                 report: {
-                    total_count: totalCount || 0,
-                    total_active: totalActive || 0,
-                    total_inactive: totalInactive || 0
+                    total_count: await this.db.Policy.count(),
+                    total_active: await this.db.Policy.count({ where: { status: 1 } }),
+                    total_inactive: await this.db.Policy.count({ where: { status: 2 } })
                 }
-            };
+            });
 
-            const encryptedResponse = DataEncrypt(JSON.stringify(response));
-            res.json({ data: encryptedResponse });
         } catch (error) {
             console.error('Error fetching policies:', error);
-            if (error.name === 'SequelizeValidationError') {
-                const validationErrors = error.errors.map((err) => err.message);
-                return res.status(500).json(DataEncrypt(JSON.stringify({
-                    status: 500,
-                    errors: 'Internal Server Error',
-                    data: validationErrors
-                })));
-            }
-            return res.status(500).json(DataEncrypt(JSON.stringify({
+            return res.status(500).json({
                 status: 500,
-                message: error.message,
+                message: error.message || 'Internal Server Error',
                 data: []
-            })));
+            });
         }
     }
+
+
 
     // Get policy by ID
     async getPolicyById(req, res) {
@@ -425,95 +425,59 @@ class Policy {
 
     // Create policy
     async createPolicy(req, res) {
+        let t;
         try {
-            const decryptedObject = DataDecrypt(req.body.data);
-            console.log("decryptedObject ", decryptedObject)
-            const { category_id, content, status = 1 } = decryptedObject;
+            const { category_id, content, status = 1 } = req.body;
 
-            let t = await this.db.sequelize.transaction();
+            t = await this.db.sequelize.transaction();
 
-            try {
-                const policyData = {
-                    category_id,
-                    content,
-                    status,
-                    created_on: new Date()
-                };
+            const policyData = {
+                category_id,
+                content,
+                status,
+                created_on: new Date()
+            };
 
-                const result = await this.db.Policy.create(policyData, { transaction: t });
+            const result = await this.db.Policy.create(policyData, { transaction: t });
 
-                if (result) {
-                    await t.commit();
-
-                    const newPolicy = await this.db.Policy.findOne({
-                        where: { id: result.id },
-                        include: [{
-                            model: this.db.PolicyCategory,
-                            as: 'category',
-                            attributes: ['id', 'category_name', 'status']
-                        }]
-                    });
-
-                    const response = {
-                        status: 201,
-                        message: 'Policy created successfully',
-                        data: newPolicy
-                    };
-                    const encryptedResponse = DataEncrypt(JSON.stringify(response));
-                    return res.status(201).json({ data: encryptedResponse });
-                } else {
-                    await t.rollback();
-                    return res.status(500).json(DataEncrypt(JSON.stringify({
-                        status: 500,
-                        error: 'Failed to create policy'
-                    })));
-                }
-            } catch (error) {
+            if (!result) {
                 await t.rollback();
-                if (error.name === 'SequelizeValidationError') {
-                    const validationErrors = error.errors.map((err) => err.message);
-                    return res.status(500).json(DataEncrypt(JSON.stringify({
-                        status: 500,
-                        errors: validationErrors
-                    })));
-                }
-                throw error;
+                return res.status(500).json({ status: 500, message: 'Failed to create policy' });
             }
+
+            await t.commit();
+
+            const newPolicy = await this.db.Policy.findOne({
+                where: { id: result.id },
+                include: [{
+                    model: this.db.PolicyCategory,
+                    as: 'category',
+                    attributes: ['id', 'category_name', 'status']
+                }]
+            });
+
+            return res.status(201).json({ status: 201, message: 'Policy created successfully', data: newPolicy });
+
         } catch (error) {
+            if (t) await t.rollback();
             console.error('Error creating policy:', error);
-            return res.status(500).json(DataEncrypt(JSON.stringify({
-                status: 500,
-                message: error.message,
-                data: []
-            })));
+            return res.status(500).json({ status: 500, message: error.message, data: [] });
         }
     }
 
     // Update policy
     async updatePolicy(req, res) {
         let t;
-
         try {
-            // Decrypt incoming request body
-            const decryptedObject = DataDecrypt(req.body.data);
-            // console.log("Decrypted Object:", decryptedObject);
-
-            const { category_id, content, status } = decryptedObject;
-
-            // Grab ID from URL
+            const { category_id, content, status } = req.body;
             const policyId = req.params.id;
 
             if (!policyId) {
-                const errorResp = DataEncrypt(JSON.stringify({
-                    status: 400,
-                    message: 'Policy ID is required'
-                }));
-                return res.status(400).json({ data: errorResp });
+                return res.status(400).json({ status: 400, message: 'Policy ID is required' });
             }
 
             t = await this.db.sequelize.transaction();
 
-            // Data to update
             const policyData = {
                 category_id,
                 content,
@@ -521,7 +485,6 @@ class Policy {
                 updated_on: new Date()
             };
 
-            // Update record
             const [updatedRows] = await this.db.Policy.update(policyData, {
                 where: { id: policyId },
                 transaction: t
@@ -529,16 +492,11 @@ class Policy {
 
             if (updatedRows === 0) {
                 await t.rollback();
-                const errorResp = DataEncrypt(JSON.stringify({
-                    status: 404,
-                    message: 'Policy not found'
-                }));
-                return res.status(404).json({ data: errorResp });
+                return res.status(404).json({ status: 404, message: 'Policy not found' });
             }
 
             await t.commit();
 
-            // Fetch updated policy with category
             const updatedPolicy = await this.db.Policy.findOne({
                 where: { id: policyId },
                 include: [{
@@ -548,27 +506,12 @@ class Policy {
                 }]
             });
 
-            // Prepare encrypted success response
-            const successResp = DataEncrypt(JSON.stringify({
-                status: 200,
-                message: 'Policy updated successfully',
-                data: updatedPolicy
-            }));
-
-            return res.status(200).json({ data: successResp });
+            return res.status(200).json({ status: 200, message: 'Policy updated successfully', data: updatedPolicy });
 
         } catch (error) {
-            console.error('Error updating policy:', error);
-
             if (t) await t.rollback();
-
-            const errorResp = DataEncrypt(JSON.stringify({
-                status: 500,
-                message: error.message || 'Internal Server Error',
-                data: []
-            }));
-
-            return res.status(500).json({ data: errorResp });
+            console.error('Error updating policy:', error);
+            return res.status(500).json({ status: 500, message: error.message, data: [] });
         }
     }
 
