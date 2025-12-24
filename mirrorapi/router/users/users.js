@@ -198,7 +198,7 @@ users.post('/9a82bc2234a56504434ce88e3ab2a11f34b0dcc8', logMiddleware, (req, res
 });
 
 //Get User Details
-users.post('/8f3457ae01ceba087cf9790ab03e62a6035bd460', authenticateJWT, logMiddleware, (req, res) => {
+users.post('/8f3457ae01ceba087cf9790ab03e62a6035bd460', logMiddleware, (req, res) => {
     registerController.getUserDetails(req.body, res)
 
         .catch(error => {
@@ -302,6 +302,8 @@ users.post('/978d91c8d62d882a00631e74fa6c6863616ebc13', fileUpload1, logMiddlewa
             res.status(500).json({ error: 'Internal Server Error' });
         });
 });
+
+
 
 //Update profile user info
 users.post('/7b02c64a0be08761645414bcc7fdbc8e583fbce3', authenticateJWT, logMiddleware, async (req, res) => {

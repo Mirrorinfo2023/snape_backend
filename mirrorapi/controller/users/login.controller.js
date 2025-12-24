@@ -742,6 +742,7 @@ class Login {
 
   async getProfile(req, res) {
     const decryptedObject = utility.DataDecrypt(req.encReq);
+    // const decryptedObject = req;
     const { id } = decryptedObject;
 
     const requiredKeys = Object.keys({ id });
@@ -755,7 +756,7 @@ class Login {
 
     try {
 
-      const userRow = await this.db.userDetails.findOne({
+      const userRow = await this.db.user.findOne({
         where: {
           id: id
         },
@@ -789,6 +790,7 @@ class Login {
         const total_referral = await this.db.referral_idslevel.getReferralCount(id, 1);
 
         return res.status(200).json(utility.DataEncrypt(JSON.stringify({ status: 200, message: 'User found Successful.', data: Result, total_cashback: total_cashback, total_referral: total_referral })));
+
         // return res.status(200).json({ status: 200, message: 'User found Successful.',  data: Result });
       } else {
         return res.status(500).json(utility.DataEncrypt(JSON.stringify({ status: 500, message: 'Failed to Update data', data: [] })));
@@ -810,6 +812,10 @@ class Login {
 
   async updateProfile(fileName, req, res) {
 
+    // 🔐 Decrypt request
+    const decryptedObject = utility.DataDecrypt(req.encReq);
+    // const decryptedObject = req;
+
     const {
       user_id,
       country_id,
@@ -825,27 +831,78 @@ class Login {
       dob,
       address,
       aniversary_date,
-      gender } = req;
+      gender,
+      aadhaar_card_no,
+      pan_card_no
+    } = decryptedObject;
 
-    let t;
+    // ✅ Basic required check
+    if (!user_id) {
+      return res.status(400).json(
+        utility.DataEncrypt(
+          JSON.stringify({
+            status: 400,
+            message: "User ID is required"
+          })
+        )
+      );
+    }
+
+    // ✅ Aadhaar validation (nullable)
+    if (aadhaar_card_no && aadhaar_card_no.length !== 12) {
+      return res.status(400).json(
+        utility.DataEncrypt(
+          JSON.stringify({
+            status: 400,
+            message: "Invalid Aadhaar number"
+          })
+        )
+      );
+    }
+
+    // ✅ PAN validation (nullable)
+    if (pan_card_no && pan_card_no.length !== 10) {
+      return res.status(400).json(
+        utility.DataEncrypt(
+          JSON.stringify({
+            status: 400,
+            message: "Invalid PAN number"
+          })
+        )
+      );
+    }
 
     try {
 
       const filePath = fileName;
       const path = 'uploads/user/';
+      const profile_pic = filePath ? path + filePath : null;
 
       const currentDate = new Date();
-      const created_on = currentDate.toISOString().replace('T', ' ').replace(/\.\d{3}Z$/, '');
+      const modified_on = currentDate
+        .toISOString()
+        .replace('T', ' ')
+        .replace(/\.\d{3}Z$/, '');
 
+      // 🔍 Find user
       const userRow = await this.db.user.findOne({
-        where: {
-          id: user_id
-        },
-
+        where: { id: user_id }
       });
-      const profile_pic = filePath ? path + filePath : null;
+
+      if (!userRow) {
+        return res.status(404).json(
+          utility.DataEncrypt(
+            JSON.stringify({
+              status: 404,
+              message: "User not found"
+            })
+          )
+        );
+      }
+
+      // 📦 Update payload
       const data = {
-        profile_pic: profile_pic,
+        profile_pic,
         country_id,
         state_id,
         city_id,
@@ -858,34 +915,65 @@ class Login {
         block,
         dob: dob ? dob : null,
         address,
+        aadhaar_card_no: aadhaar_card_no ? aadhaar_card_no : null,
+        pan_card_no: pan_card_no ? pan_card_no : null,
         aniversary_date,
-        modified_on: created_on,
-        gender
+        gender,
+        modified_on
       };
 
+      // 🧠 DB update
       const updatedUser = await this.db.user.updateData(data, userRow.id);
 
       if (updatedUser > 0) {
-        return res.status(200).json({ status: 200, message: 'User update Successful.', data: data });
-        //  return res.status(200).json(utility.DataEncrypt(JSON.stringify({ status: 200, message: 'User update Successful.', data:data})));
+        return res.status(200).json(
+          utility.DataEncrypt(
+            JSON.stringify({
+              status: 200,
+              message: 'User update successful',
+              data: data
+            })
+          )
+        );
       } else {
-
-        return res.status(500).json(utility.DataEncrypt(JSON.stringify({ status: 500, message: 'Failed to Update data', data: [] })));
-        // return res.status(500).json({ status: 500, message: 'Failed to Update data', data: [] });
-
+        return res.status(500).json(
+          utility.DataEncrypt(
+            JSON.stringify({
+              status: 500,
+              message: 'Failed to update data',
+              data: []
+            })
+          )
+        );
       }
 
     } catch (error) {
-      logger.error(`Unable to find Kyc: ${error}`);
+      logger.error(`Unable to update profile: ${error}`);
+
       if (error.name === 'SequelizeValidationError') {
-        const validationErrors = error.errors.map((err) => err.message);
-        //   return res.status(500).json({ status: 500,errors: validationErrors });
-        return res.status(500).json(utility.DataEncrypt(JSON.stringify({ status: 500, errors: validationErrors })));
+        const validationErrors = error.errors.map(err => err.message);
+        return res.status(500).json(
+          utility.DataEncrypt(
+            JSON.stringify({
+              status: 500,
+              errors: validationErrors
+            })
+          )
+        );
       }
-      return res.status(500).json(utility.DataEncrypt(JSON.stringify({ status: 500, message: error, data: [] })));
-      // return res.status(500).json({ status: 500,  message: error ,data:[]});
+
+      return res.status(500).json(
+        utility.DataEncrypt(
+          JSON.stringify({
+            status: 500,
+            message: error.message || error,
+            data: []
+          })
+        )
+      );
     }
   }
+
 
 
 

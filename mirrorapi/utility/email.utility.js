@@ -148,18 +148,19 @@ async function hourlyBalanceUpdateEmailMessage(first_name, last_name, mobile, cu
 async function send_mail(to, subject, message, attachmentPath = null) {
 
     const transporter = nodemailer.createTransport({
-        host: "185.185.126.30",
-        port: 465,
-        secure: true,
+        host: "3.110.49.240",   // mail25 SMTP server
+        port: 465,               // SSL
+        secure: true,            // true for 465
         auth: {
-            user: "update@mayway.in",
-            pass: "NXDxuDz8",
+            user: "noreply@boltpe.money",
+            pass: "Welcome@123",
         },
-        tls: { rejectUnauthorized: false },
+        tls: {
+            rejectUnauthorized: false
+        },
         logger: true,
         debug: true
     });
-
     try {
         const mailSubject = message?.subject || subject || "No Subject";
         const mailBody = message?.body || (typeof message === "string" ? message : JSON.stringify(message));

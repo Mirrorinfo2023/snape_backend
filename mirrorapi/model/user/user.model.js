@@ -322,7 +322,17 @@ module.exports = (sequelize, DataTypes, Model, Op) => {
     gender: { type: DataTypes.STRING, allowNull: true },
     city: { type: DataTypes.STRING, allowNull: true },
     is_portfolio: { type: DataTypes.INTEGER, allowNull: true },
-    is_levelincome: { type: DataTypes.INTEGER, allowNull: true }
+    is_levelincome: { type: DataTypes.INTEGER, allowNull: true },
+    aadhaar_card_no: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+
+    pan_card_no: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+
 
   }, {
     sequelize,
