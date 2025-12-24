@@ -813,9 +813,9 @@ class Login {
   async updateProfile(fileName, req, res) {
 
     // 🔐 Decrypt request
-    const decryptedObject = utility.DataDecrypt(req.encReq);
-    // const decryptedObject = req;
-
+    // const decryptedObject = utility.DataDecrypt(req.encReq);
+    const decryptedObject = req;
+    // console.log("decryptedObject ", decryptedObject)
     const {
       user_id,
       country_id,
